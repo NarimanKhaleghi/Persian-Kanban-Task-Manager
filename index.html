@@ -1,0 +1,1098 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Persian Kanban</title>
+    <style>
+        :root {
+            --bg: #f0f0f5;
+            --surface: rgba(255, 255, 255, 0.7);
+            --surface2: rgba(235, 235, 240, 0.55);
+            --text: #1d1d1f;
+            --text2: #6e6e73;
+            --border: rgba(200, 200, 210, 0.6);
+            --blue: #0071e3;
+            --blue-light: #e3f0ff;
+            --red: #ff3b30;
+            --red-light: #ffe5e5;
+            --green: #34c759;
+            --green-light: #e5f9e9;
+            --orange: #ff9500;
+            --orange-light: #fff3e0;
+            --yellow: #ffcc00;
+            --gray: #8e8e93;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+            --radius: clamp(12px, 2vw, 18px);
+            --radius-sm: clamp(8px, 1.5vw, 12px);
+            --transition: 0.25s cubic-bezier(0.2, 0, 0, 1);
+            --font: 'Vazir', 'Tahoma', sans-serif;
+            --column-bg: rgba(245, 245, 250, 0.45);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --modal-overlay: rgba(0, 0, 0, 0.35);
+            --header-bg: rgba(255, 255, 255, 0.8);
+            --input-bg: rgba(245, 245, 247, 0.95);
+            --card-hover: rgba(250, 250, 252, 0.95);
+            --backdrop-blur: blur(20px);
+            --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+            --card-hover-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+        }
+
+        .dark {
+            --bg: #1c1c1e;
+            --surface: rgba(44, 44, 46, 0.75);
+            --surface2: rgba(58, 58, 60, 0.65);
+            --text: #f5f5f7;
+            --text2: #a1a1a6;
+            --border: rgba(72, 72, 74, 0.7);
+            --blue: #4da6ff;
+            --blue-light: #1a3a5c;
+            --red: #ff6961;
+            --red-light: #3d1c1c;
+            --green: #4cd964;
+            --green-light: #1c3d24;
+            --orange: #ffb340;
+            --orange-light: #3d2e1c;
+            --yellow: #ffd426;
+            --gray: #636366;
+            --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            --column-bg: rgba(40, 40, 43, 0.45);
+            --card-bg: rgba(44, 44, 46, 0.85);
+            --modal-overlay: rgba(0, 0, 0, 0.7);
+            --header-bg: rgba(44, 44, 46, 0.8);
+            --input-bg: rgba(58, 58, 60, 0.9);
+            --card-hover: rgba(50, 50, 54, 0.95);
+            --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+            --card-hover-shadow: 0 8px 28px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background var(--transition), color var(--transition);
+            overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            backdrop-filter: var(--backdrop-blur);
+            -webkit-backdrop-filter: var(--backdrop-blur);
+            line-height: 1.6;
+            font-size: clamp(14px, 2.5vw, 16px);
+        }
+
+        /* ---- HEADER (ULTRACOMPACT MOBILE) ---- */
+        header {
+            background: var(--header-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-bottom: 1px solid var(--border);
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            z-index: 110;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+            position: sticky;
+            top: 0;
+            border-radius: 0 0 20px 20px;
+            flex-wrap: nowrap;        /* never wrap on mobile */
+        }
+        .datetime {
+            font-size: 12px;
+            color: var(--text2);
+            white-space: nowrap;
+            background: var(--surface);
+            padding: 5px 12px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            display: inline-flex;
+            gap: 4px;
+            align-items: baseline;
+        }
+        .datetime .date-part {
+            font-weight: 700;
+            color: var(--text);
+            font-size: 13px;
+        }
+
+        button {
+            font-family: var(--font);
+            cursor: pointer;
+            border: none;
+            border-radius: 28px;
+            padding: 6px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            transition: all var(--transition);
+            background: var(--surface);
+            color: var(--text);
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            outline: none;
+            position: relative;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid var(--border);
+            letter-spacing: 0.2px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+        }
+        button:hover {
+            background: var(--surface2);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            border-color: var(--blue);
+        }
+        button:active { transform: scale(0.96); }
+
+        button.primary {
+            background: var(--blue);
+            color: #fff;
+            border-color: transparent;
+        }
+        button.danger {
+            background: var(--red);
+            color: #fff;
+            border-color: transparent;
+        }
+        button.small {
+            padding: 4px 12px;
+            font-size: 11px;
+        }
+        button.icon-btn {
+            padding: 6px;
+            font-size: 16px;
+            min-width: 36px;
+            width: 36px;
+            height: 36px;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 50%;
+        }
+        button.badge-btn {
+            position: relative;
+        }
+        button .badge {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: var(--red);
+            color: #fff;
+            font-size: 10px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            pointer-events: none;
+        }
+
+        /* ---- FILTER BAR (collapsed by default on mobile) ---- */
+        .filter-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            flex-wrap: wrap;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 60px;
+            z-index: 100;
+            border-radius: 0 0 20px 20px;
+            margin: 0 8px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+            transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.3s ease;
+            max-height: 500px;
+            opacity: 1;
+        }
+        .filter-bar.filter-visible {
+            max-height: 0;
+            opacity: 0;
+            padding-top: 0;
+            padding-bottom: 0;
+            margin-bottom: 0;
+            overflow: hidden;
+            border-bottom: none;
+        }
+
+        .filter-bar input,
+        .filter-bar select {
+            padding: 8px 14px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            font-family: var(--font);
+            font-size: 12px;
+            background: var(--input-bg);
+            color: var(--text);
+            outline: none;
+            min-width: 0;
+            flex: 1 1 auto;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+        .filter-bar input:focus,
+        .filter-bar select:focus {
+            border-color: var(--blue);
+            box-shadow: 0 0 0 3px var(--blue-light);
+        }
+        .filter-date-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex: 1 1 auto;
+            min-width: 120px;
+        }
+        .filter-date-wrapper input {
+            width: 100%;
+            padding-right: 32px;
+            cursor: pointer;
+        }
+        .filter-date-wrapper .calendar-trigger {
+            position: absolute;
+            left: 6px;
+            background: transparent;
+            border: none;
+            font-size: 15px;
+            cursor: pointer;
+            padding: 4px;
+            color: var(--text2);
+        }
+
+        /* ---- ADD TASK ROW ---- */
+        .add-task-row {
+            display: flex;
+            gap: 8px;
+            padding: 10px 16px;
+            align-items: center;
+            background: var(--surface);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border);
+            margin: 6px 8px 0;
+            border-radius: 16px 16px 0 0;
+        }
+        .add-task-row input {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 24px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            background: var(--input-bg);
+            color: var(--text);
+            outline: none;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        /* ---- BOARD & COLUMNS ---- */
+        .board-container {
+            display: flex;
+            gap: 10px;
+            padding: 8px;
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-behavior: smooth;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+        }
+        .column {
+            flex: 1 1 0%;
+            min-width: 180px;
+            background: var(--column-bg);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid transparent;
+            transition: all var(--transition);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.4);
+            overflow: hidden;
+        }
+        .column.drag-over {
+            border-color: var(--blue) !important;
+            background: var(--blue-light) !important;
+            box-shadow: inset 0 0 20px rgba(0,113,227,0.15);
+        }
+        .column-header {
+            padding: 12px 14px 8px;
+            font-weight: 800;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            background: inherit;
+            border-radius: 20px 20px 0 0;
+            z-index: 2;
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+        .column-count {
+            font-size: 11px;
+            background: var(--surface);
+            padding: 2px 10px;
+            border-radius: 16px;
+            color: var(--text2);
+            font-weight: 700;
+            border: 1px solid var(--border);
+        }
+        .column-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 4px 8px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-height: 60px;
+        }
+        .column-body.empty-hint::after {
+            content: 'خالی';
+            display: block;
+            text-align: center;
+            color: var(--gray);
+            font-size: 12px;
+            padding: 25px 0;
+            opacity: 0.7;
+        }
+
+        /* ---- TASK CARD ---- */
+        .task-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 12px;
+            padding: 10px 14px;
+            cursor: grab;
+            border: 2px solid var(--border);
+            transition: all var(--transition);
+            box-shadow: var(--card-shadow);
+            touch-action: manipulation;
+            animation: cardAppear 0.25s ease;
+        }
+        .task-card:hover {
+            box-shadow: var(--card-hover-shadow);
+            background: var(--card-hover);
+            transform: translateY(-2px);
+            border-color: var(--blue);
+        }
+        .task-card.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+            box-shadow: none;
+        }
+        .task-card.drag-ghost {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0.9;
+            transform: rotate(2deg) scale(1.03);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+            width: 220px;
+            backdrop-filter: blur(25px);
+            border: 2px solid var(--blue);
+        }
+        .task-card.child-card {
+            margin-right: 16px;
+            border-right: 3px solid var(--blue);
+            border-radius: 8px 12px 12px 8px;
+        }
+        .card-title {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 4px;
+            word-break: break-word;
+        }
+        .card-meta {
+            font-size: 10px;
+            color: var(--text2);
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .due-overdue { color: var(--red) !important; animation: blink 1s infinite; }
+        .assignee-tag { background: var(--blue-light); color: var(--blue); padding: 1px 8px; border-radius: 12px; font-size: 9px; font-weight: 700; }
+        .blocked-icon { color: var(--orange); font-size: 13px; }
+        .subtask-count { font-size: 9px; background: var(--surface2); padding: 1px 6px; border-radius: 10px; }
+
+        .task-card.due-critical { border-color: var(--red) !important; animation: criticalPulse 1.8s infinite; }
+        @keyframes criticalPulse {
+            0% { box-shadow: 0 0 0 0 rgba(255,59,48,0.5); }
+            50% { box-shadow: 0 0 0 8px rgba(255,59,48,0); }
+            100% { box-shadow: 0 0 0 0 rgba(255,59,48,0); }
+        }
+        .task-card.due-warning { border-color: var(--yellow) !important; }
+
+        /* ---- MODALS ---- */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: var(--modal-overlay);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            animation: fadeIn 0.2s;
+            padding-top: 30vh;
+        }
+        .modal-panel {
+            background: var(--surface);
+            backdrop-filter: blur(35px);
+            border-radius: 24px;
+            padding: 20px;
+            max-width: 500px;
+            width: 92%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s;
+            border: 1px solid var(--border);
+        }
+        .modal-panel h2 { font-size: 18px; margin-bottom: 16px; }
+        .modal-close-btn {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: var(--surface2);
+            border: none;
+            font-size: 18px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid var(--border);
+        }
+        .modal-panel label { font-size: 11px; margin: 10px 0 4px; color: var(--text2); text-transform: uppercase; }
+        .modal-panel input[type="text"],
+        .modal-panel textarea,
+        .modal-panel select {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            font-size: 13px;
+            background: var(--input-bg);
+            resize: vertical;
+        }
+        .modal-panel textarea { min-height: 70px; }
+        .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; }
+
+        .calendar-popup {
+            position: absolute;
+            background: var(--surface);
+            backdrop-filter: blur(30px);
+            border-radius: 18px;
+            padding: 10px;
+            z-index: 3100;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            width: 220px;
+            top: 45px;
+            left: 0;
+        }
+        .calendar-popup .cal-header { display: flex; justify-content: space-between; font-weight: 700; font-size: 13px; margin-bottom: 6px; }
+        .calendar-popup .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 2px; font-size: 11px; }
+        .calendar-popup .day-cell { padding: 5px 1px; border-radius: 6px; cursor: pointer; }
+        .calendar-popup .day-cell.selected { background: var(--blue); color: #fff; }
+
+        .toast-container { position: sticky; bottom: 5vh; left: 50%; text-align: center; z-index: 9999; }
+        .toast { background: rgba(30,30,30,0.9); backdrop-filter: blur(25px); color: #fff; padding: 12px 20px; border-radius: 28px; font-size: 13px; }
+
+        /* ---- MOBILE TWEAKS ---- */
+        @media (max-width: 600px) {
+            .board-container {
+                flex-direction: column;
+                overflow-x: hidden;
+                overflow-y: auto;
+            }
+            .column {
+                min-height: 200px;
+                max-height: 60vh;
+                min-width: auto;
+            }
+            .filter-bar {
+                top: 52px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container" id="appContainer">
+        <header id="mainHeader">
+            <div class="header-left">
+                <span class="datetime" id="liveDateTime">
+                    <span class="date-part" id="datePart"></span> <span id="timePart"></span>
+                </span>
+
+            </div>
+            <div class="header-right">
+                <button class="icon-btn" id="darkModeToggle" title="تغییر حالت روشن/تاریخ">🌓</button>
+                <button class="icon-btn" id="archiveBtn">📦<span class="icon" id="archiveBadge" style="display:none;">0</span></button>
+                <button class="icon-btn" id="trashBtn">🗑<span class="badge" id="trashBadge" style="display:none;">0</span></button>
+                <button class="icon-btn" id="settingsBtn" title="تنظیمات">⚙️</button>
+                <button class="icon-btn" id="filterToggleBtn" title="فیلترها">🔍</button>
+            </div>
+        </header>
+
+        <div class="filter-bar filter-visible" id="filterBar">
+            <input type="text" id="searchInput" placeholder="🔍 جستجو در عنوان و توضیحات...">
+            <select id="filterStatus">
+                <option value="all">همه وضعیت‌ها (فعال)</option>
+                <option value="backlog">Backlog</option>
+                <option value="todo">Todo</option>
+                <option value="blocked">Blocked</option>
+                <option value="done">Done</option>
+                <option value="archive">Archive</option>
+                <option value="trash">Trash</option>
+            </select>
+            <select id="filterAssignee">
+                <option value="all">همه مسئولین</option>
+            </select>
+            <div class="filter-date-wrapper">
+                <input type="text" id="filterDateFrom" placeholder="از تاریخ" readonly>
+                <span class="calendar-trigger" id="calTriggerFrom">📅</span>
+            </div>
+            <div class="filter-date-wrapper">
+                <input type="text" id="filterDateTo" placeholder="تا تاریخ" readonly>
+                <span class="calendar-trigger" id="calTriggerTo">📅</span>
+            </div>
+            <button class="small" id="clearFiltersBtn">پاک کردن فیلترها</button>
+        </div>
+
+        <div class="add-task-row">
+            <input type="text" id="addTaskInput" placeholder="عنوان تسک جدید">
+            <button class="primary" id="addTaskBtn">+ افزودن</button>
+        </div>
+
+        <div class="board-container" id="boardContainer">
+            <div class="column" data-status="backlog" id="colBacklog">
+                <div class="column-header">📋 Backlog <span class="column-count" id="countBacklog">0</span></div>
+                <div class="column-body empty-hint" id="bodyBacklog"></div>
+            </div>
+            <div class="column" data-status="todo" id="colTodo">
+                <div class="column-header">📝 Todo <span class="column-count" id="countTodo">0</span></div>
+                <div class="column-body empty-hint" id="bodyTodo"></div>
+            </div>
+            <div class="column" data-status="blocked" id="colBlocked">
+                <div class="column-header">🚫 Blocked <span class="column-count" id="countBlocked">0</span></div>
+                <div class="column-body empty-hint" id="bodyBlocked"></div>
+            </div>
+            <div class="column" data-status="done" id="colDone">
+                <div class="column-header">✅ Done <span class="column-count" id="countDone">0</span></div>
+                <div class="column-body empty-hint" id="bodyDone"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="modal-overlay" id="taskModal" style="display:none;">
+        <div class="modal-panel" id="taskModalPanel">
+            <button class="modal-close-btn" id="closeTaskModal">✕</button>
+            <h2>جزئیات تسک</h2>
+            <div id="taskModalContent"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="archiveModal" style="display:none;">
+        <div class="modal-panel" id="archiveModalPanel">
+            <button class="modal-close-btn" id="closeArchiveModal">✕</button>
+            <h2>📦 آرشیو</h2>
+            <div id="archiveContent"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="trashModal" style="display:none;">
+        <div class="modal-panel" id="trashModalPanel">
+            <button class="modal-close-btn" id="closeTrashModal">✕</button>
+            <h2>🗑 سطل آشغال</h2>
+            <div id="trashContent"></div>
+            <div class="modal-actions" style="margin-top:20px;">
+                <button class="danger" id="emptyTrashBtn">⚠️ خالی کردن سطل آشغال</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="settingsModal" style="display:none;">
+        <div class="modal-panel" id="settingsModalPanel">
+            <button class="modal-close-btn" id="closeSettingsModal">✕</button>
+            <h2>⚙️ تنظیمات</h2>
+            <div id="settingsContent"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="blockedByModal" style="display:none;">
+        <div class="modal-panel" id="blockedByModalPanel">
+            <button class="modal-close-btn" id="closeBlockedByModal">✕</button>
+            <h2>🚫 انتخاب تسک بلاک‌کننده</h2>
+            <p style="margin:10px 0;">لطفاً تسکی که این تسک را بلاک کرده انتخاب کنید:</p>
+            <select id="blockedBySelect" style="width:100%;padding:12px;"></select>
+            <div class="modal-actions" style="margin-top:20px;">
+                <button id="cancelBlockedBy">انصراف</button>
+                <button class="primary" id="confirmBlockedBy">تأیید و انتقال</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const Jalali = {
+                g_days_in_month: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
+                j_days_in_month: [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29],
+                isLeapGregorian(year) { return ((year % 4 === 0) && (year % 100 !== 0)) || (year % 400 === 0); },
+                gregorianToJalali(gy, gm, gd) {
+                    let g_d_m = [31,28,31,30,31,30,31,31,30,31,30,31];
+                    if(this.isLeapGregorian(gy)) g_d_m[1]=29;
+                    let gy2 = (gm>2)?(gy+1):gy;
+                    let days = 355666 + (365*gy) + Math.floor((gy2+3)/4) - Math.floor((gy2+99)/100) + Math.floor((gy2+399)/400) + gd;
+                    for(let i=0;i<gm-1;i++) days+=g_d_m[i];
+                    let jy = -1595 + (33*Math.floor(days/12053));
+                    days %= 12053;
+                    jy += 4*Math.floor(days/1461);
+                    days %= 1461;
+                    if(days>365){ jy+=Math.floor((days-1)/365); days=(days-1)%365; }
+                    let jm,jd;
+                    if(days<186){ jm=1+Math.floor(days/31); jd=1+(days%31); }
+                    else { jm=7+Math.floor((days-186)/30); jd=1+((days-186)%30); }
+                    return {jy,jm,jd};
+                },
+                jalaliToGregorian(jy,jm,jd) {
+                    jy+=1595; let days = -355668 + (365*jy) + (Math.floor(jy/33)*8) + Math.floor(((jy%33)+3)/4);
+                    if(jy%33===32 && ((jy-32)/33)*33+32===jy) days+=3;
+                    for(let i=1;i<jm;i++) days+=this.j_days_in_month[i-1];
+                    days+=jd;
+                    let gy=400*Math.floor(days/146097); days%=146097;
+                    if(days>36524){ gy+=100*Math.floor((days-1)/36524); days=(days-1)%36524; if(days>=365) days++; }
+                    gy+=4*Math.floor(days/1461); days%=1461;
+                    if(days>365){ gy+=Math.floor((days-1)/365); days=(days-1)%365; }
+                    let gm,gd; let g_d_m=[31,28,31,30,31,30,31,31,30,31,30,31];
+                    if(this.isLeapGregorian(gy)) g_d_m[1]=29;
+                    for(let i=0;i<12;i++){ if(days<=g_d_m[i]){ gm=i+1; gd=days; break; } days-=g_d_m[i]; }
+                    return {gy,gm,gd};
+                },
+                nowJalali() { const n=new Date(); return this.gregorianToJalali(n.getFullYear(),n.getMonth()+1,n.getDate()); },
+                nowTimestamp() { const n=new Date(); const j=this.gregorianToJalali(n.getFullYear(),n.getMonth()+1,n.getDate()); const pad=n=>String(n).padStart(2,'0'); return `${j.jy}/${pad(j.jm)}/${pad(j.jd)} ${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`; },
+                formatDate(jy,jm,jd) { const pad=n=>String(n).padStart(2,'0'); return `${jy}/${pad(jm)}/${pad(jd)}`; },
+                parseDate(str) { const parts=str.split('/'); if(parts.length===3) return {jy:parseInt(parts[0]),jm:parseInt(parts[1]),jd:parseInt(parts[2])}; return null; },
+                compareDates(d1,d2) { if(!d1||!d2) return 0; const p1=this.parseDate(d1),p2=this.parseDate(d2); if(!p1||!p2) return 0; if(p1.jy!==p2.jy) return p1.jy-p2.jy; if(p1.jm!==p2.jm) return p1.jm-p2.jm; return p1.jd-p2.jd; },
+                isOverdue(dueDateStr) { if(!dueDateStr) return false; const now=this.nowJalali(); const due=this.parseDate(dueDateStr); if(!due) return false; const nowKey=now.jy*10000+now.jm*100+now.jd; const dueKey=due.jy*10000+due.jm*100+due.jd; return dueKey<nowKey; },
+                daysBetween(d1,d2) { const p1=this.parseDate(d1),p2=this.parseDate(d2); if(!p1||!p2) return null; const g1=this.jalaliToGregorian(p1.jy,p1.jm,p1.jd); const g2=this.jalaliToGregorian(p2.jy,p2.jm,p2.jd); const timeDiff=new Date(g1.gy,g1.gm-1,g1.gd).getTime()-new Date(g2.gy,g2.gm-1,g2.gd).getTime(); return Math.ceil(timeDiff/(1000*60*60*24)); }
+            };
+
+            const DB_NAME='taskManagerFS', DB_STORE='fileHandles', HANDLE_KEY='dbFileHandle';
+            let dbData={tasks:[],assignees:[],settings:{darkMode:false}};
+            let fileHandle=null, useFileSystemAPI=false, isFallbackMode=false;
+
+            async function openIndexedDB(){ return new Promise((resolve,reject)=>{ const req=indexedDB.open(DB_NAME,1); req.onupgradeneeded=e=>{ const db=e.target.result; if(!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE); }; req.onsuccess=e=>resolve(e.target.result); req.onerror=e=>reject(e.target.error); }); }
+            async function getStoredHandle(){ const db=await openIndexedDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction(DB_STORE,'readonly'); const store=tx.objectStore(DB_STORE); const req=store.get(HANDLE_KEY); req.onsuccess=()=>resolve(req.result||null); req.onerror=()=>reject(req.error); tx.oncomplete=()=>db.close(); }); }
+            async function storeHandle(handle){ const db=await openIndexedDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction(DB_STORE,'readwrite'); const store=tx.objectStore(DB_STORE); store.put(handle,HANDLE_KEY); tx.oncomplete=()=>{db.close();resolve();}; tx.onerror=()=>reject(tx.error); }); }
+            async function clearStoredHandle(){ const db=await openIndexedDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction(DB_STORE,'readwrite'); const store=tx.objectStore(DB_STORE); store.delete(HANDLE_KEY); tx.oncomplete=()=>{db.close();resolve();}; tx.onerror=()=>reject(tx.error); }); }
+            async function readFileAsText(handle){ const file=await handle.getFile(); return await file.text(); }
+            async function writeFileText(handle,text){ const writable=await handle.createWritable(); await writable.write(text); await writable.close(); }
+
+            async function initFileSystem(){
+                if(!('showOpenFilePicker' in window) && !('showSaveFilePicker' in window)){ isFallbackMode=true; return false; }
+                try{
+                    const stored=await getStoredHandle();
+                    if(stored){ try{ const perm=await stored.queryPermission({mode:'readwrite'}); if(perm==='granted'){ fileHandle=stored; useFileSystemAPI=true; const text=await readFileAsText(fileHandle); dbData=JSON.parse(text); if(!dbData.assignees) dbData.assignees=[]; if(!dbData.settings) dbData.settings={darkMode:false}; return true; } else { const newPerm=await stored.requestPermission({mode:'readwrite'}); if(newPerm==='granted'){ fileHandle=stored; useFileSystemAPI=true; const text=await readFileAsText(fileHandle); dbData=JSON.parse(text); if(!dbData.assignees) dbData.assignees=[]; if(!dbData.settings) dbData.settings={darkMode:false}; return true; } } } catch(e){ await clearStoredHandle(); } }
+                    const result=await showFileDialog(); return result;
+                }catch(e){ isFallbackMode=true; return false; }
+            }
+
+            async function showFileDialog(){
+                const action=confirm('برای ذخیره‌سازی داده‌ها نیاز به یک فایل JSON دارید.\n\nروی "تأیید" کلیک کنید تا یک فایل جدید بسازید، یا روی "انصراف" کلیک کنید تا یک فایل موجود را انتخاب کنید.');
+                try{
+                    if(action){
+                        const handle=await window.showSaveFilePicker({ suggestedName:'tasks_db.json', types:[{description:'JSON Database',accept:{'application/json':['.json']}}] });
+                        const defaultData={tasks:[],assignees:[],settings:{darkMode:false}};
+                        await writeFileText(handle,JSON.stringify(defaultData,null,2));
+                        await storeHandle(handle);
+                        fileHandle=handle; useFileSystemAPI=true; dbData=defaultData; return true;
+                    }else{
+                        const [handle]=await window.showOpenFilePicker({ types:[{description:'JSON Database',accept:{'application/json':['.json']}}], multiple:false });
+                        const text=await readFileAsText(handle);
+                        dbData=JSON.parse(text); if(!dbData.assignees) dbData.assignees=[]; if(!dbData.settings) dbData.settings={darkMode:false};
+                        await storeHandle(handle); fileHandle=handle; useFileSystemAPI=true; return true;
+                    }
+                }catch(e){ if(e.name==='AbortError'){ isFallbackMode=true; return false; } throw e; }
+            }
+
+            async function saveDatabase(){
+                if(useFileSystemAPI && fileHandle){ try{ await writeFileText(fileHandle,JSON.stringify(dbData,null,2)); } catch(e){ showToast('خطا در ذخیره‌سازی فایل!','error'); } }
+                else if(isFallbackMode){ const db=await openIndexedDB(); return new Promise((resolve,reject)=>{ const tx=db.transaction(DB_STORE,'readwrite'); const store=tx.objectStore(DB_STORE); store.put(JSON.stringify(dbData),'fallbackData'); tx.oncomplete=()=>{db.close();resolve();}; tx.onerror=()=>reject(tx.error); }); }
+            }
+            async function loadFallbackData(){ try{ const db=await openIndexedDB(); return new Promise(resolve=>{ const tx=db.transaction(DB_STORE,'readonly'); const store=tx.objectStore(DB_STORE); const req=store.get('fallbackData'); req.onsuccess=()=>{ if(req.result){ try{ dbData=JSON.parse(req.result); if(!dbData.assignees) dbData.assignees=[]; if(!dbData.settings) dbData.settings={darkMode:false}; }catch(e){ dbData={tasks:[],assignees:[],settings:{darkMode:false}}; } } resolve(); }; req.onerror=()=>resolve(); tx.oncomplete=()=>db.close(); }); }catch(e){ dbData={tasks:[],assignees:[],settings:{darkMode:false}}; } }
+
+            let activeFilters={status:'all',assignee:'all',dateFrom:'',dateTo:'',search:''};
+            let draggedTaskId=null, dragSourceColumn=null, dragGhostEl=null, isDragging=false, pendingDropInfo=null;
+
+            function generateId(){ return 'tsk_'+Date.now().toString(36)+'_'+Math.random().toString(36).substr(2,8); }
+            function showToast(msg,type=''){ const container=document.getElementById('toastContainer'); const toast=document.createElement('div'); toast.className='toast '+type; toast.textContent=msg; container.appendChild(toast); setTimeout(()=>{if(toast.parentNode) toast.remove();},3000); }
+            function getTaskById(id){ return dbData.tasks.find(t=>t.id===id); }
+            function getChildrenOf(parentId){ return dbData.tasks.filter(t=>t.parentId===parentId); }
+
+            function getOrderedTasksForColumn(status){
+                const allInColumn=dbData.tasks.filter(t=>t.status===status);
+                const visited=new Set(); const result=[];
+                function addWithChildren(task){
+                    if(visited.has(task.id)) return; visited.add(task.id); result.push(task);
+                    const children=allInColumn.filter(t=>t.parentId===task.id);
+                    children.sort((a,b)=>(a.order||0)-(b.order||0));
+                    children.forEach(ch=>addWithChildren(ch));
+                }
+                const topLevel=allInColumn.filter(t=>!t.parentId || !allInColumn.find(p=>p.id===t.parentId));
+                topLevel.sort((a,b)=>(a.order||0)-(b.order||0));
+                topLevel.forEach(t=>addWithChildren(t));
+                allInColumn.forEach(t=>{ if(!visited.has(t.id)){ visited.add(t.id); result.push(t); } });
+                return result;
+            }
+
+            function countTasksInStatus(status){ return dbData.tasks.filter(t=>t.status===status).length; }
+
+            function getFilteredTasksForColumn(status){
+                let tasks=getOrderedTasksForColumn(status);
+                if(activeFilters.status!=='all' && activeFilters.status!==status) return [];
+                if(activeFilters.search){ const s=activeFilters.search.toLowerCase(); tasks=tasks.filter(t=>t.title.toLowerCase().includes(s)||(t.description||'').toLowerCase().includes(s)); }
+                if(activeFilters.assignee!=='all') tasks=tasks.filter(t=>t.assignee===activeFilters.assignee);
+                if(activeFilters.dateFrom) tasks=tasks.filter(t=>t.createdAt && Jalali.compareDates(t.createdAt.split(' ')[0],activeFilters.dateFrom)>=0);
+                if(activeFilters.dateTo) tasks=tasks.filter(t=>t.createdAt && Jalali.compareDates(t.createdAt.split(' ')[0],activeFilters.dateTo)<=0);
+                return tasks;
+            }
+
+            function addLog(task,previousStatus,newStatus,description=''){
+                if(!task.log) task.log=[];
+                task.log.push({timestamp:Jalali.nowTimestamp(),previousStatus:previousStatus||task.status,newStatus:newStatus||task.status,description:description||'ویرایش تسک'});
+            }
+
+            function renderBoard(){
+                ['backlog','todo','blocked','done'].forEach(status=>{
+                    const body=document.getElementById('body'+status.charAt(0).toUpperCase()+status.slice(1));
+                    const countEl=document.getElementById('count'+status.charAt(0).toUpperCase()+status.slice(1));
+                    if(!body||!countEl) return;
+                    const tasks=getFilteredTasksForColumn(status);
+                    body.innerHTML='';
+                    if(tasks.length===0) body.classList.add('empty-hint'); else body.classList.remove('empty-hint');
+                    tasks.forEach(task=>{ const card=createTaskCard(task); body.appendChild(card); });
+                    countEl.textContent=countTasksInStatus(status);
+                });
+                updateBadges(); updateFilterAssigneeOptions();
+            }
+
+            function createTaskCard(task){
+                const card=document.createElement('div');
+                card.className='task-card';
+                if(task.parentId && getTaskById(task.parentId) && getTaskById(task.parentId).status===task.status) card.classList.add('child-card');
+                card.dataset.taskId=task.id;
+                card.draggable=false;
+                const dueDateStr=task.dueDate;
+                const isOverdue=Jalali.isOverdue(dueDateStr);
+                const today=Jalali.nowJalali();
+                const dueDays=dueDateStr ? Jalali.daysBetween(dueDateStr, Jalali.formatDate(today.jy,today.jm,today.jd)) : null;
+                if(dueDateStr && (isOverdue || dueDays===0)) card.classList.add('due-critical');
+                else if(dueDateStr && dueDays!==null && (dueDays===1 || dueDays===2)) card.classList.add('due-warning');
+                card.innerHTML=`
+                    <div class="card-title">${escapeHTML(task.title)}</div>
+                    <div class="card-meta">
+                        ${task.dueDate ? `<span class="${isOverdue && task.status!=='done' && task.status!=='archive' ? 'due-overdue' : ''}">📅 ${escapeHTML(task.dueDate)}</span>` : ''}
+                        ${task.assignee ? `<span class="assignee-tag">👤 ${escapeHTML(task.assignee)}</span>` : ''}
+                        ${task.status==='blocked' && task.blockedBy ? `<span class="blocked-icon">⚠️ بلاک شده</span>` : ''}
+                        ${getChildrenOf(task.id).filter(c=>c.status===task.status).length>0 ? `<span class="subtask-count">📎 ${getChildrenOf(task.id).filter(c=>c.status===task.status).length} زیرمجموعه</span>` : ''}
+                    </div>
+                `;
+                card.addEventListener('click',(e)=>{ if(isDragging) return; openTaskModal(task.id); });
+                card.addEventListener('mousedown',(e)=>onDragStart(e,task.id,task.status));
+                card.addEventListener('touchstart',(e)=>onDragStart(e,task.id,task.status),{passive:false});
+                return card;
+            }
+
+            function updateBadges(){ const archiveCount=countTasksInStatus('archive'), trashCount=countTasksInStatus('trash'); document.getElementById('archiveBadge').textContent=archiveCount; document.getElementById('archiveBadge').style.display=archiveCount>0?'flex':'none'; document.getElementById('trashBadge').textContent=trashCount; document.getElementById('trashBadge').style.display=trashCount>0?'flex':'none'; }
+            function updateFilterAssigneeOptions(){ const select=document.getElementById('filterAssignee'); const currentVal=select.value; select.innerHTML='<option value="all">همه مسئولین</option>'; dbData.assignees.forEach(a=>select.innerHTML+=`<option value="${escapeHTML(a)}" ${currentVal===a?'selected':''}>${escapeHTML(a)}</option>`); if(currentVal!=='all' && !dbData.assignees.includes(currentVal) && currentVal) select.innerHTML+=`<option value="${escapeHTML(currentVal)}" selected>${escapeHTML(currentVal)}</option>`; }
+            function updateLiveDateTime(){ const now=new Date(); const j=Jalali.gregorianToJalali(now.getFullYear(),now.getMonth()+1,now.getDate()); const pad=n=>String(n).padStart(2,'0'); const weekdays=['یکشنبه','دوشنبه','سه‌شنبه','چهارشنبه','پنجشنبه','جمعه','شنبه']; document.getElementById('datePart').textContent=`${weekdays[(now.getDay()+1)%7]}، ${j.jy}/${pad(j.jm)}/${pad(j.jd)}`; document.getElementById('timePart').textContent=`${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`; }
+
+            function escapeHTML(str){ const div=document.createElement('div'); div.textContent=str||''; return div.innerHTML; }
+
+            function openTaskModal(taskId){
+                const task=getTaskById(taskId); if(!task) return;
+                const modal=document.getElementById('taskModal'); const content=document.getElementById('taskModalContent');
+                const allTasks=dbData.tasks.filter(t=>t.id!==taskId && t.status!=='trash');
+                const children=getChildrenOf(taskId); const parent=task.parentId?getTaskById(task.parentId):null;
+                const attachList=(task.attachments||[]).map((att,i)=>`<li><a href="${att.data}" target="_blank" download="${att.name}">${escapeHTML(att.name)}</a> <button class="small danger remove-attach-btn" data-index="${i}">حذف</button></li>`).join('');
+                const logList=(task.log||[]).slice().reverse().map(l=>`<li>${l.timestamp} | ${l.previousStatus||'?'} → ${l.newStatus||'?'} | ${escapeHTML(l.description)}</li>`).join('');
+                content.innerHTML=`
+                    <label>عنوان</label><input type="text" id="editTitle" value="${escapeHTML(task.title)}">
+                    <label>توضیحات</label><textarea id="editDescription">${escapeHTML(task.description||'')}</textarea>
+                    <label>وضعیت</label><select id="editStatus">${['backlog','todo','blocked','done','archive','trash'].map(s=>`<option value="${s}" ${task.status===s?'selected':''}>${s}</option>`).join('')}</select>
+                    ${task.status==='blocked' && task.blockedBy ? `<p>بلاک شده توسط: ${escapeHTML((getTaskById(task.blockedBy)?.title)||'ناشناخته')}</p>` : ''}
+                    ${task.status==='blocked' ? `<label>تسک بلاک‌کننده</label><select id="editBlockedBy"><option value="">-- انتخاب --</option>${allTasks.map(t=>`<option value="${t.id}" ${task.blockedBy===t.id?'selected':''}>${escapeHTML(t.title)}</option>`).join('')}</select>` : ''}
+                    <label>مسئول</label><input type="text" id="editAssignee" value="${escapeHTML(task.assignee||'')}" list="assigneeList"><datalist id="assigneeList">${dbData.assignees.map(a=>`<option value="${escapeHTML(a)}">`).join('')}</datalist>
+                    <label>مهلت (dueDate)</label><div style="display:flex;gap:8px;"><input type="text" id="editDueDate" value="${task.dueDate||''}" placeholder="1403/06/15" style="flex:1;"><button class="small" id="openCalendarBtn">📅</button></div>
+                    <div id="calendarContainer" style="position:relative;"></div>
+                    <label>پیوست‌ها</label><ul class="attachment-list">${attachList||'<li>بدون پیوست</li>'}</ul><input type="file" id="addAttachmentInput">
+                    <label>روابط والد-فرزندی</label>
+                    <div style="margin:8px 0;">
+                        <span>والد:</span>
+                        <select id="parentSelect" style="margin-right:10px;padding:6px;"><option value="">بدون والد</option>${allTasks.filter(t=>t.id!==taskId).map(t=>`<option value="${t.id}" ${task.parentId===t.id?'selected':''}>${escapeHTML(t.title)}</option>`).join('')}</select>
+                        <button class="small" id="removeParentBtn" ${!task.parentId?'disabled':''}>حذف والد</button>
+                    </div>
+                    <div style="margin:8px 0;">
+                        <span>زیرمجموعه‌ها:</span>
+                        <ul id="childrenList" style="list-style:none;font-size:13px;margin:6px 0;">
+                            ${children.map(c=>`<li style="display:flex;align-items:center;gap:8px;">${escapeHTML(c.title)} (${c.status}) <button class="small danger removeChildBtn" data-childid="${c.id}">حذف</button></li>`).join('') || '<li>بدون زیرمجموعه</li>'}
+                        </ul>
+                        <select id="addChildSelect" style="margin-top:6px;padding:6px;"><option value="">افزودن زیرمجموعه موجود...</option>${dbData.tasks.filter(t=>t.id!==taskId && !children.find(c=>c.id===t.id) && t.parentId!==taskId).map(t=>`<option value="${t.id}">${escapeHTML(t.title)}</option>`).join('')}</select>
+                    </div>
+                    <label>لاگ تغییرات</label><ol class="log-list">${logList||'<li>بدون لاگ</li>'}</ol>
+                    <div class="modal-actions">
+                        <button id="saveTaskBtn" class="primary">💾 ذخیره</button>
+                        <button id="archiveTaskBtn">📦 آرشیو</button>
+                        <button id="trashTaskBtn" class="danger">🗑 سطل آشغال</button>
+                    </div>
+                `;
+                modal.style.display='flex';
+                document.getElementById('closeTaskModal').onclick=()=>{modal.style.display='none';};
+                document.getElementById('saveTaskBtn').onclick=()=>saveTaskChanges(task);
+                document.getElementById('archiveTaskBtn').onclick=()=>{ task.archivedFrom=task.status; task.status='archive'; addLog(task,task.archivedFrom,'archive'); saveDatabase().then(()=>{modal.style.display='none';renderBoard();}); };
+                document.getElementById('trashTaskBtn').onclick=()=>{ task.status='trash'; addLog(task,task.status,'trash'); saveDatabase().then(()=>{modal.style.display='none';renderBoard();}); };
+                document.getElementById('openCalendarBtn').onclick=()=>openCalendarPicker(task);
+                document.getElementById('addAttachmentInput').onchange=(e)=>{ const file=e.target.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=()=>{ if(!task.attachments) task.attachments=[]; task.attachments.push({name:file.name,data:reader.result}); saveDatabase().then(()=>openTaskModal(taskId)); }; reader.readAsDataURL(file); };
+                content.querySelectorAll('.remove-attach-btn').forEach(btn=>{ btn.addEventListener('click',()=>{ const idx=parseInt(btn.dataset.index); task.attachments.splice(idx,1); saveDatabase().then(()=>openTaskModal(taskId)); }); });
+                document.getElementById('parentSelect').onchange=function(){ const val=this.value; if(val) task.parentId=val; else task.parentId=null; saveDatabase().then(()=>openTaskModal(taskId)); };
+                document.getElementById('removeParentBtn').onclick=()=>{ task.parentId=null; saveDatabase().then(()=>openTaskModal(taskId)); };
+                document.getElementById('addChildSelect').onchange=function(){ const childId=this.value; if(childId){ const child=getTaskById(childId); if(child){ child.parentId=taskId; saveDatabase().then(()=>openTaskModal(taskId)); } } };
+                content.querySelectorAll('.removeChildBtn').forEach(btn=>{ btn.addEventListener('click',()=>{ const childId=btn.dataset.childid; const child=getTaskById(childId); if(child){ child.parentId=null; saveDatabase().then(()=>openTaskModal(taskId)); } }); });
+                modal.addEventListener('click',(e)=>{if(e.target===modal) modal.style.display='none';});
+            }
+
+            function saveTaskChanges(task){
+                const newTitle=document.getElementById('editTitle')?.value?.trim();
+                const newDesc=document.getElementById('editDescription')?.value?.trim()||'';
+                const newStatus=document.getElementById('editStatus')?.value;
+                const newAssignee=document.getElementById('editAssignee')?.value?.trim()||null;
+                const newDueDate=document.getElementById('editDueDate')?.value?.trim()||null;
+                const newBlockedBy=document.getElementById('editBlockedBy')?.value||null;
+                if(!newTitle){ showToast('عنوان نمی‌تواند خالی باشد','error'); return; }
+                if(['todo','blocked','done'].includes(newStatus) && !newDueDate){ showToast('برای این وضعیت تعیین مهلت الزامی است','error'); return; }
+                if(newStatus==='blocked' && !newBlockedBy && !task.blockedBy){ showToast('باید تسک بلاک‌کننده انتخاب شود','error'); return; }
+                const oldStatus=task.status;
+                task.title=newTitle; task.description=newDesc; task.status=newStatus; task.assignee=newAssignee; task.dueDate=newDueDate;
+                if(newStatus==='blocked') task.blockedBy=newBlockedBy||task.blockedBy; else task.blockedBy=null;
+                if(newAssignee && !dbData.assignees.includes(newAssignee)) dbData.assignees.push(newAssignee);
+                addLog(task,oldStatus,newStatus,oldStatus!==newStatus?'تغییر وضعیت':'ویرایش جزئیات');
+                saveDatabase().then(()=>{ document.getElementById('taskModal').style.display='none'; renderBoard(); showToast('ذخیره شد'); });
+            }
+
+            function openCalendarPicker(task){
+                const container=document.getElementById('calendarContainer'); if(!container) return;
+                const now=Jalali.nowJalali(); let calYear=now.jy, calMonth=now.jm;
+                const currentDue=task.dueDate?Jalali.parseDate(task.dueDate):null;
+                function renderCal(){
+                    const gFirst=Jalali.jalaliToGregorian(calYear,calMonth,1);
+                    const firstDayOfWeek=new Date(gFirst.gy,gFirst.gm-1,gFirst.gd).getDay();
+                    const daysInMonth=calMonth<=6?31:calMonth<=11?30:Jalali.j_days_in_month[11];
+                    const weekdays=['ش','ی','د','س','چ','پ','ج'];
+                    let html='<div class="calendar-popup"><div class="cal-header">';
+                    html+=`<button class="small cal-prev">◀</button><span>${calYear}/${String(calMonth).padStart(2,'0')}</span><button class="small cal-next">▶</button></div><div class="cal-grid">`;
+                    weekdays.forEach(d=>html+=`<div class="day-name">${d}</div>`);
+                    const offset=(firstDayOfWeek+1)%7;
+                    for(let i=0;i<offset;i++) html+='<div class="day-cell empty"></div>';
+                    for(let d=1;d<=daysInMonth;d++){ const isSelected=currentDue&&currentDue.jy===calYear&&currentDue.jm===calMonth&&currentDue.jd===d; html+=`<div class="day-cell${isSelected?' selected':''}" data-day="${d}">${d}</div>`; }
+                    html+='</div></div>'; container.innerHTML=html;
+                    container.querySelector('.cal-prev').onclick=()=>{ calMonth--; if(calMonth<1){calMonth=12;calYear--;} renderCal(); };
+                    container.querySelector('.cal-next').onclick=()=>{ calMonth++; if(calMonth>12){calMonth=1;calYear++;} renderCal(); };
+                    container.querySelectorAll('.day-cell:not(.empty)').forEach(cell=>{ cell.onclick=()=>{ const day=parseInt(cell.dataset.day); document.getElementById('editDueDate').value=Jalali.formatDate(calYear,calMonth,day); container.innerHTML=''; }; });
+                }
+                renderCal();
+                setTimeout(()=>{ const clickOutside=e=>{ if(!container.contains(e.target) && e.target.id!=='openCalendarBtn'){ container.innerHTML=''; document.removeEventListener('click',clickOutside); } }; document.addEventListener('click',clickOutside); },100);
+            }
+
+            function onDragStart(e, taskId, sourceStatus) {
+                // ignore if clicking a button/input/etc.
+                if (e.target.closest('button') || e.target.closest('input') ||
+                    e.target.closest('select') || e.target.closest('textarea')) return;
+
+                // store initial touch/mouse position
+                if (e.type === 'touchstart') {
+                    if (e.touches.length !== 1) return;
+                    dragStartX = e.touches[0].clientX;
+                    dragStartY = e.touches[0].clientY;
+                } else {
+                    dragStartX = e.clientX;
+                    dragStartY = e.clientY;
+                }
+
+                draggedTaskId = taskId;
+                dragSourceColumn = sourceStatus;
+                isDragging = false;
+
+                // calculate offset for the ghost
+                const card = document.querySelector(`[data-task-id="${taskId}"]`);
+                if (card) {
+                    const rect = card.getBoundingClientRect();
+                    const clientX = (e.type === 'touchstart') ? e.touches[0].clientX : e.clientX;
+                    const clientY = (e.type === 'touchstart') ? e.touches[0].clientY : e.clientY;
+                    dragOffsetX = clientX - rect.left;
+                    dragOffsetY = clientY - rect.top;
+                }
+
+                // attach move/end listeners (without preventDefault)
+                if (e.type === 'touchstart') {
+                    document.addEventListener('touchmove', onDragMove, { passive: false });
+                    document.addEventListener('touchend', onDragEnd);
+                } else {
+                    document.addEventListener('mousemove', onDragMove);
+                    document.addEventListener('mouseup', onDragEnd);
+                }
+                // ⚠️ Do NOT call e.preventDefault() here – it kills the click event.
+            }
+
+            function onDragMove(e){
+                if(!draggedTaskId) return;
+                const clientX=e.type==='touchmove'?e.touches[0].clientX:e.clientX;
+                const clientY=e.type==='touchmove'?e.touches[0].clientY:e.clientY;
+                const dx=clientX-dragStartX, dy=clientY-dragStartY;
+                if(!isDragging && (Math.abs(dx)>5||Math.abs(dy)>5)){
+                    isDragging=true; const card=document.querySelector(`[data-task-id="${draggedTaskId}"]`);
+                    if(card){ card.classList.add('dragging'); dragGhostEl=card.cloneNode(true); dragGhostEl.classList.add('drag-ghost'); dragGhostEl.style.width=card.offsetWidth+'px'; document.body.appendChild(dragGhostEl); }
+                }
+                if(isDragging && dragGhostEl){ dragGhostEl.style.left=(clientX-dragOffsetX)+'px'; dragGhostEl.style.top=(clientY-dragOffsetY)+'px'; const colUnder=getColumnUnder(clientX,clientY); document.querySelectorAll('.column').forEach(c=>c.classList.remove('drag-over')); if(colUnder) colUnder.classList.add('drag-over'); }
+                if(e.type==='touchmove') e.preventDefault();
+            }
+
+            async function onDragEnd(e){
+                document.removeEventListener('mousemove',onDragMove); document.removeEventListener('mouseup',onDragEnd);
+                document.removeEventListener('touchmove',onDragMove); document.removeEventListener('touchend',onDragEnd);
+                document.querySelectorAll('.column').forEach(c=>c.classList.remove('drag-over'));
+                if(dragGhostEl&&dragGhostEl.parentNode) dragGhostEl.remove(); dragGhostEl=null;
+                const card=document.querySelector(`[data-task-id="${draggedTaskId}"]`); if(card) card.classList.remove('dragging');
+                if(!isDragging||!draggedTaskId){ resetDrag(); return; }
+                const clientX=e.type==='touchend'?(e.changedTouches[0]?.clientX||dragStartX):e.clientX;
+                const clientY=e.type==='touchend'?(e.changedTouches[0]?.clientY||dragStartY):e.clientY;
+                const targetCol=getColumnUnder(clientX,clientY);
+                const task=getTaskById(draggedTaskId); if(!task){ resetDrag(); return; }
+                if(targetCol){
+                    const targetStatus=targetCol.dataset.status;
+                    if(targetStatus===dragSourceColumn){
+                        const body=document.getElementById('body'+targetStatus.charAt(0).toUpperCase()+targetStatus.slice(1));
+                        const cards=[...body.querySelectorAll('.task-card:not(.dragging)')];
+                        let insertIndex=cards.length;
+                        for(let i=0;i<cards.length;i++){ const rect=cards[i].getBoundingClientRect(); if(clientY<rect.top+rect.height/2){ insertIndex=i; break; } }
+                        reorderTasksInColumn(dragSourceColumn,task,insertIndex);
+                        resetDrag(); return;
+                    }
+                    if(['todo','blocked','done'].includes(targetStatus) && !task.dueDate){ showToast('تعیین مهلت الزامی است','error'); resetDrag(); return; }
+                    if(targetStatus==='blocked'){ pendingDropInfo={task,targetStatus}; const blockerId=await showBlockedByModal(task); if(!blockerId){ resetDrag(); return; } task.blockedBy=blockerId; pendingDropInfo=null; }
+                    const oldStatus=task.status; task.status=targetStatus; if(targetStatus!=='blocked') task.blockedBy=null;
+                    if(targetStatus==='archive') task.archivedFrom=oldStatus;
+                    addLog(task,oldStatus,targetStatus,'درگ‌اند‌دراپ');
+                    await saveDatabase(); renderBoard(); showToast(`به ${targetStatus} منتقل شد`);
+                }
+                resetDrag();
+            }
+
+            function reorderTasksInColumn(status,task,insertIndex){
+                const tasksInCol=getOrderedTasksForColumn(status);
+                const currentIndex=tasksInCol.findIndex(t=>t.id===task.id);
+                if(currentIndex===-1) return;
+                tasksInCol.splice(currentIndex,1);
+                if(insertIndex>=tasksInCol.length) tasksInCol.push(task); else tasksInCol.splice(insertIndex,0,task);
+                tasksInCol.forEach((t,idx)=>{ t.order=idx*1000; });
+                saveDatabase().then(renderBoard);
+            }
+
+            function resetDrag(){ draggedTaskId=null; dragSourceColumn=null; isDragging=false; pendingDropInfo=null; if(dragGhostEl&&dragGhostEl.parentNode) dragGhostEl.remove(); dragGhostEl=null; }
+            function getColumnUnder(x,y){ const cols=document.querySelectorAll('.column'); for(const col of cols){ const rect=col.getBoundingClientRect(); if(x>=rect.left&&x<=rect.right&&y>=rect.top&&y<=rect.bottom) return col; } const el=document.elementFromPoint(x,y); return el?el.closest('.column'):null; }
+            function showBlockedByModal(task){ return new Promise(resolve=>{ const modal=document.getElementById('blockedByModal'); const select=document.getElementById('blockedBySelect'); const allTasks=dbData.tasks.filter(t=>t.id!==task.id&&t.status!=='trash'); select.innerHTML='<option value="">-- انتخاب --</option>'+allTasks.map(t=>`<option value="${t.id}">${escapeHTML(t.title)}</option>`).join(''); modal.style.display='flex'; document.getElementById('confirmBlockedBy').onclick=()=>{ const val=select.value; if(!val){showToast('باید انتخاب کنید','error');return;} modal.style.display='none'; resolve(val); }; document.getElementById('cancelBlockedBy').onclick=()=>{modal.style.display='none';resolve(null);}; document.getElementById('closeBlockedByModal').onclick=()=>{modal.style.display='none';resolve(null);}; modal.addEventListener('click',(e)=>{if(e.target===modal){modal.style.display='none';resolve(null);}}); }); }
+
+            function setupEventListeners(){
+                document.getElementById('addTaskBtn').addEventListener('click',addNewTask);
+                document.getElementById('addTaskInput').addEventListener('keydown',e=>{if(e.key==='Enter') addNewTask();});
+                document.getElementById('darkModeToggle').addEventListener('click',toggleDarkMode);
+                document.getElementById('archiveBtn').addEventListener('click',()=>{ renderArchivePanel(); document.getElementById('archiveModal').style.display='flex'; });
+                document.getElementById('trashBtn').addEventListener('click',()=>{ renderTrashPanel(); document.getElementById('trashModal').style.display='flex'; });
+                document.getElementById('settingsBtn').addEventListener('click',()=>{ renderSettingsPanel(); document.getElementById('settingsModal').style.display='flex'; });
+                document.getElementById('closeArchiveModal').addEventListener('click',()=>document.getElementById('archiveModal').style.display='none');
+                document.getElementById('closeTrashModal').addEventListener('click',()=>document.getElementById('trashModal').style.display='none');
+                document.getElementById('closeSettingsModal').addEventListener('click',()=>document.getElementById('settingsModal').style.display='none');
+                document.getElementById('emptyTrashBtn').addEventListener('click',()=>{ if(confirm('همه تسک‌های سطل آشغال حذف دائمی شوند؟')){ dbData.tasks=dbData.tasks.filter(t=>t.status!=='trash'); saveDatabase().then(()=>{renderBoard();document.getElementById('trashModal').style.display='none';showToast('سطل آشغال خالی شد');}); } });
+                document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m) m.style.display='none';}));
+                document.getElementById('searchInput').addEventListener('input',debounce(()=>{activeFilters.search=document.getElementById('searchInput').value.trim();renderBoard();},200));
+                document.getElementById('filterStatus').addEventListener('change',()=>{activeFilters.status=document.getElementById('filterStatus').value;renderBoard();});
+                document.getElementById('filterAssignee').addEventListener('change',()=>{activeFilters.assignee=document.getElementById('filterAssignee').value;renderBoard();});
+                document.getElementById('clearFiltersBtn').addEventListener('click',clearFilters);
+                document.getElementById('calTriggerFrom').addEventListener('click',()=>openFilterCalendar('filterDateFrom'));
+                document.getElementById('calTriggerTo').addEventListener('click',()=>openFilterCalendar('filterDateTo'));
+                document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal-overlay').forEach(m=>m.style.display='none'); document.getElementById('calendarContainer').innerHTML='';}});
+            }
+
+            function openFilterCalendar(inputId){
+                const container=document.createElement('div'); container.className='calendar-popup'; container.style.position='absolute'; container.style.zIndex='3000';
+                const now=Jalali.nowJalali(); let calYear=now.jy, calMonth=now.jm;
+                function renderCal(){
+                    const gFirst=Jalali.jalaliToGregorian(calYear,calMonth,1);
+                    const firstDayOfWeek=new Date(gFirst.gy,gFirst.gm-1,gFirst.gd).getDay();
+                    const daysInMonth=calMonth<=6?31:calMonth<=11?30:Jalali.j_days_in_month[11];
+                    let html='<div class="cal-header">';
+                    html+=`<button class="small cal-prev">◀</button><span>${calYear}/${String(calMonth).padStart(2,'0')}</span><button class="small cal-next">▶</button></div><div class="cal-grid">`;
+                    ['ش','ی','د','س','چ','پ','ج'].forEach(d=>html+=`<div class="day-name">${d}</div>`);
+                    const offset=(firstDayOfWeek+1)%7;
+                    for(let i=0;i<offset;i++) html+='<div class="day-cell empty"></div>';
+                    for(let d=1;d<=daysInMonth;d++) html+=`<div class="day-cell" data-day="${d}">${d}</div>`;
+                    html+='</div>'; container.innerHTML=html;
+                    container.querySelector('.cal-prev').onclick=()=>{calMonth--;if(calMonth<1){calMonth=12;calYear--;}renderCal();};
+                    container.querySelector('.cal-next').onclick=()=>{calMonth++;if(calMonth>12){calMonth=1;calYear++;}renderCal();};
+                    container.querySelectorAll('.day-cell:not(.empty)').forEach(cell=>cell.onclick=()=>{ const day=parseInt(cell.dataset.day); document.getElementById(inputId).value=Jalali.formatDate(calYear,calMonth,day); activeFilters[inputId==='filterDateFrom'?'dateFrom':'dateTo']=Jalali.formatDate(calYear,calMonth,day); renderBoard(); container.remove(); });
+                }
+                renderCal();
+                const wrapper=document.getElementById(inputId).parentNode; wrapper.style.position='relative'; wrapper.appendChild(container);
+                setTimeout(()=>{ const clickOutside=e=>{ if(!container.contains(e.target) && e.target.id!==inputId && e.target.className!=='calendar-trigger'){ container.remove(); document.removeEventListener('click',clickOutside); } }; document.addEventListener('click',clickOutside); },100);
+            }
+
+            function addNewTask(){ const input=document.getElementById('addTaskInput'); const title=input.value.trim(); if(!title){showToast('عنوان نمی‌تواند خالی باشد','error');return;} const newTask={id:generateId(),title,description:'',status:'backlog',createdAt:Jalali.nowTimestamp(),dueDate:null,assignee:null,attachments:[],blockedBy:null,parentId:null,archivedFrom:null,log:[{timestamp:Jalali.nowTimestamp(),previousStatus:'',newStatus:'backlog',description:'ایجاد'}],order:Date.now()}; dbData.tasks.push(newTask); input.value=''; saveDatabase().then(()=>{renderBoard();showToast('تسک جدید اضافه شد');}); }
+            function toggleDarkMode(){ dbData.settings.darkMode=!dbData.settings.darkMode; applyDarkMode(); saveDatabase(); }
+            function applyDarkMode(){ if(dbData.settings.darkMode) document.body.classList.add('dark'); else document.body.classList.remove('dark'); }
+            function clearFilters(){ activeFilters={status:'all',assignee:'all',dateFrom:'',dateTo:'',search:''}; document.getElementById('searchInput').value=''; document.getElementById('filterStatus').value='all'; document.getElementById('filterAssignee').value='all'; document.getElementById('filterDateFrom').value=''; document.getElementById('filterDateTo').value=''; renderBoard(); }
+            function debounce(fn,delay){ let timer; return function(...args){ clearTimeout(timer); timer=setTimeout(()=>fn.apply(this,args),delay); }; }
+            function renderArchivePanel(){ const content=document.getElementById('archiveContent'); const tasks=dbData.tasks.filter(t=>t.status==='archive'); content.innerHTML=tasks.length?tasks.map(t=>`<div style="display:flex;justify-content:space-between;padding:8px;"><span>${escapeHTML(t.title)}</span><button class="small primary restore-archive-btn" data-task-id="${t.id}">بازگردانی</button></div>`).join(''):'<p>آرشیو خالی است</p>'; content.querySelectorAll('.restore-archive-btn').forEach(b=>b.addEventListener('click',()=>{ const t=getTaskById(b.dataset.taskId); if(t){ t.status=t.archivedFrom||'backlog'; t.archivedFrom=null; addLog(t,'archive',t.status); saveDatabase().then(()=>{renderBoard();renderArchivePanel();}); } })); }
+            function renderTrashPanel(){ const content=document.getElementById('trashContent'); const tasks=dbData.tasks.filter(t=>t.status==='trash'); content.innerHTML=tasks.length?tasks.map(t=>`<div style="display:flex;justify-content:space-between;padding:8px;"><span>${escapeHTML(t.title)}</span><button class="small restore-trash-btn" data-task-id="${t.id}">بازگردانی</button><button class="small danger delete-forever-btn" data-task-id="${t.id}">حذف دائم</button></div>`).join(''):'<p>سطل آشغال خالی است</p>'; content.querySelectorAll('.restore-trash-btn').forEach(b=>b.addEventListener('click',()=>{ const t=getTaskById(b.dataset.taskId); if(t){ t.status='backlog'; addLog(t,'trash','backlog'); saveDatabase().then(()=>{renderBoard();renderTrashPanel();}); } })); content.querySelectorAll('.delete-forever-btn').forEach(b=>b.addEventListener('click',()=>{ if(confirm('حذف دائمی؟')){ dbData.tasks=dbData.tasks.filter(t=>t.id!==b.dataset.taskId); saveDatabase().then(()=>{renderBoard();renderTrashPanel();}); } })); }
+            function renderSettingsPanel(){ document.getElementById('settingsContent').innerHTML=`<button class="primary" id="exportDBBtn">📥 Export</button><button id="importDBBtn">📤 Import</button><button class="danger" id="resetDBBtn">⚠️ Reset</button>`; document.getElementById('exportDBBtn').addEventListener('click',()=>{ const blob=new Blob([JSON.stringify(dbData,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='tasks_db_export.json'; a.click(); }); document.getElementById('importDBBtn').addEventListener('click',()=>{ if(!confirm('جایگزینی کامل؟')) return; const input=document.createElement('input'); input.type='file'; input.accept='.json'; input.onchange=async e=>{ const file=e.target.files[0]; if(!file) return; const text=await file.text(); dbData=JSON.parse(text); if(!dbData.assignees) dbData.assignees=[]; if(!dbData.settings) dbData.settings={darkMode:false}; await saveDatabase(); renderBoard(); }; input.click(); }); document.getElementById('resetDBBtn').addEventListener('click',()=>{ if(confirm('حذف همه داده‌ها؟')){ dbData={tasks:[],assignees:[],settings:{darkMode:dbData.settings.darkMode}}; saveDatabase().then(renderBoard); } }); }
+
+            async function init(){
+                setupEventListeners();
+                const fsAvailable=await initFileSystem();
+                if(!fsAvailable && isFallbackMode){ await loadFallbackData(); showToast('حالت fallback','warning'); }
+                else if(!fsAvailable) await loadFallbackData();
+                applyDarkMode(); updateLiveDateTime(); setInterval(updateLiveDateTime,1000); renderBoard();
+            }
+            init().catch(err=>{ console.error(err); isFallbackMode=true; loadFallbackData().then(()=>{applyDarkMode();renderBoard();}); });
+        })();
+
+
+        document.getElementById('filterToggleBtn').addEventListener('click', () => {
+        document.getElementById('filterBar').classList.toggle('filter-visible');
+        });
+
+    </script>
+</body>
+</html>
